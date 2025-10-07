@@ -44,9 +44,13 @@ $mailbox | ForEach-Object {
     Write-Progress -Activity "Getting mailbox statistics... ($([math]::Round($pctComplete,2))%)" -Status "[$($counter) / $($total)] [$($currentMailbox.DisplayName)]"
 
     $stats = Get-MailboxStatistics -Identity $currentMailbox.ExchangeGuid
+    $stats.TotalItemSize = (($stats.TotalItemSize.ToString() -split '\(')[1] -replace ' bytes\)', '' -replace ',', '') -as [Int64]
     $stats | Add-Member -MemberType NoteProperty -Name PrimarySmtpAddress -Value $currentMailbox.PrimarySmtpAddress
+
 
     $result += $stats
 }
 
+$result | Add-Member -MemberType ScriptProperty -Name TotalItemSizeMB -Value { [math]::round(($this.TotalItemSize / 1MB), 2) }
+$result | Add-Member -MemberType ScriptProperty -Name TotalItemSizeGB -Value { [math]::round(($this.TotalItemSize / 1GB), 2) }
 $result
